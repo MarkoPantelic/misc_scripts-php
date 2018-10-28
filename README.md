@@ -4,4 +4,4 @@ Misc PHP scripts
 
 ### List ###
 
-* laravel_lang_sort.php - Sort Laravel's lang file array
+* laravel_lang_sorter.php - Sort Laravel's lang file array
