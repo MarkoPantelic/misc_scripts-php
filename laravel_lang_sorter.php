@@ -75,6 +75,29 @@
 
 
 	/**
+	 * Return quote char. If contents of the $val string contain ' then
+	 * return " and converse. 
+	 * 
+	 * @param string $val
+	 * 
+	 * @return string
+	 */
+	function getQuoteChar($val)
+	{
+		$q = "'"; // default quote char
+
+		if(strpos($val, '"') === FALSE) {
+			$q = '"';
+		}
+		if(strpos($val, "'") === FALSE) {
+			$q = "'";
+		}
+
+		return $q;
+	}
+
+
+	/**
 	 * Recursively construct cumulative string of multidimensional array
 	 *
 	 * @param array $arr                  | array to sort and output as a string
@@ -101,7 +124,8 @@
 			else {
 				$concat .= ms(INDENT_STR, $arrLevel+1);
 				$concat .= sprintf("%-". $levelsMaxKeyWidth[$arrLevel] . "s", "'$key'");
-				$concat .= " => '" . $val . "'," . PHP_EOL;
+				$q = getQuoteChar($val);
+				$concat .= " => " . $q . $val . $q . "," . PHP_EOL;
 			}
 
 		}
@@ -244,13 +268,16 @@
 	 * Sort PHP array and beautify it. 
 	 * 
 	 * @param string $filepath
+	 * @param array  $execSetup
 	 * 
 	 * @return string|FALSE
 	 */
-	function performPhpLangFileSortAndBeautify($filepath)
+	function performPhpLangFileSortAndBeautify($filepath, $execSetup)
 	{
-		if(!checkPhpLangFile($filepath)) { // this call is temporary until php comments parsing feature is created.
-			return FALSE;
+		if(!isset($execSetup['force'])) {
+			if(!checkPhpLangFile($filepath)) { // this call is temporary until php comments parsing feature is created.
+				return FALSE;
+			}
 		}
 
 		$result = '';
@@ -274,10 +301,11 @@
 	 * Sort JSON object by keys. 
 	 * 
 	 * @param string $filepath
+	 * @param array  $execSetup
 	 * 
 	 * @return string
 	 */
-	function performJsonLangFileSortAndBeautify($filepath)
+	function performJsonLangFileSortAndBeautify($filepath, $execSetup)
 	{
 		// TODO: check if input file is in utf8 (json_decode demands utf8 as input)
 		//       check if JSON syntax is valid. See https://secure.php.net/manual/en/json.constants.php
@@ -299,9 +327,12 @@
 	/**
 	 * Perform sort and return result as string
 	 * 
+	 * @param string $filepath
+	 * @param array  $execSetup
+	 * 
 	 * @return string
 	 */
-	function performSortAndBeautify($filepath)
+	function performSortAndBeautify($filepath, $execSetup)
 	{
 		$result = '';
 
@@ -313,10 +344,10 @@
 		// preform sort and string operations
 		// ----------------------------------
 		if ($fileExt == 'php') {
-			$result = performPhpLangFileSortAndBeautify($filepath);
+			$result = performPhpLangFileSortAndBeautify($filepath, $execSetup);
 		}
 		elseif ($fileExt == 'json') {
-			$result = performJsonLangFileSortAndBeautify($filepath);
+			$result = performJsonLangFileSortAndBeautify($filepath, $execSetup);
 		}
 		else {
 			fwrite(STDERR, PROGNAME . ": Invalid file extension detected. Expecting 'php' or 'json'. Exiting..." . PHP_EOL);
@@ -329,6 +360,12 @@
 
 	/**
 	 * Write result to a file.
+	 * 
+	 * @param string  $filepath
+	 * @param string  $result
+	 * @param boolean $ask
+	 * 
+	 * @return void
 	 */
 	function writeResultToFile($filepath, $result, $ask=FALSE)
 	{
@@ -369,17 +406,19 @@
 		$execSetup = [
 			'inplace' => NULL,
 			'recursive' => NULL,
+			'force' => NULL,
 			'output_target' => NULL // TODO: if there is more than one input file than throw error
 		];
 
 		// parse CLI arguments
 		// ----------------------
-		$shortOptions = "hri";
-		$longOptions = ['help', 'recursive', 'inplace'];
+		$shortOptions = "hrif";
+		$longOptions = ['help', 'recursive', 'inplace', 'force'];
 		$optionsExplanation = [
 				"\t -h \t --help \t Print this help message", 
 				"\t -r \t --recursive \t Go through the directory files recursively", 
 				"\t -i \t --inplace \t Sort inplace (overwrite)", 
+				"\t -f \t --force \t Do not ask me anything, ignore warnings."
 		];
 
 		$optArgs = getopt($shortOptions, $longOptions);
@@ -396,13 +435,14 @@
 			printHelp($optionsExplanation);
 			exit(1);
 		}
-
 		if( isset($optArgs['i']) || isset($optArgs['inplace'])) {
 			$execSetup['inplace'] = TRUE;
 		}
-
 		if( isset($optArgs['r']) || isset($optArgs['recursive'])) {
 			$execSetup['recursive'] = TRUE;
+		}
+		if( isset($optArgs['f']) || isset($optArgs['force'])) {
+			$execSetup['force'] = TRUE;
 		}
 
 		// check if required non option argument is received
@@ -435,7 +475,7 @@
 			exit(1);
 		}
 
-		$result = performSortAndBeautify($filepath);
+		$result = performSortAndBeautify($filepath, $execSetup);
 
 		if($result === FALSE) {
 			fwrite(STDERR, PROGNAME . ": Skipping file '$filepath'" . PHP_EOL);
@@ -446,7 +486,7 @@
 			writeResultToFile($filepath, $result);
 		}
 		elseif(isset($execSetup['outputTarget'])) {
-			writeResultToFile($execSetup['outputTarget'], $result);
+			writeResultToFile($execSetup['outputTarget'], $result); // TODO: set this when comment parsing feature is finished -> , $execSetup['force'] ? FALSE : TRUE);
 		}
 		else {
 			echo $result;

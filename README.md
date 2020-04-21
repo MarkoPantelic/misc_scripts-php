@@ -11,20 +11,24 @@ Misc PHP scripts
 ### Manual ###
 
 Basic usage of laravel_lang_sorter.php:
-./laravel_lang_sorter.php /path/to/laravel/lang/file.php
+```
+php laravel_lang_sorter.php /path/to/laravel/lang/file.php
+```
 
 Previously specified command would read, sort, beautify and finally output 
 result to the STDOUT.
 
 To sort and beautify all lang files (to the lowest depth, recursively) from 
 laravel's lang directory, that is to replace old content with new content use:
-./laravel_lang_sorter.php --recursive --inplace /path/to/laravel/lang/folder
+```
+php laravel_lang_sorter.php --recursive --inplace /path/to/laravel/lang/folder
+```
 
 If in previous example we remove --recursive option then this command would
 only loop through files on the first level of the specified directory.
 
 Example of .php file contents conversion from e.g.:
-
+```
 <?php
 return [
     'videos-count' => "Number of videos",
@@ -52,9 +56,9 @@ return [
     'last-entry-voting' => "Last finished voting"
     
 ];
-
+```
 to
-
+```
 <?php
 return [
 	'artists-count'                        => 'Number of artists',
@@ -81,9 +85,9 @@ return [
 	'voting-grade'                         => 'G.',
 	'voting-title'                         => 'Title',
 ];
-
+```
 or from contents of JSON lang file e.g:
-
+```
 {
     "remove": "izbriši",
     "cancel": "ignoriši izmene",
@@ -105,9 +109,9 @@ or from contents of JSON lang file e.g:
     "Notifications": "Obaveštenja",
     "Overview": "Pregled"
 }
-
+```
 to
-
+```
 {
     "Artists": "Umetnici",
     "cancel": "ignoriši izmene",
@@ -129,7 +133,7 @@ to
     "Voting": "Glasanje",
     "Write a comment": "Napišite Vaš komentar"
 }
-
+```
 
 
 
